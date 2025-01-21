@@ -1,0 +1,71 @@
+name: OSS Review Toolkit CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+
+env:
+  SDK_VERSION: '9.0.102'
+  TEST_RESULTS_DIRECTORY: './TestResults'
+
+jobs:
+  oss-review:
+    name: Run OSS Review Toolkit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@v4.2.2
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: "Setup .NET"
+      uses: actions/setup-dotnet@v4.2.0
+      with:
+        dotnet-version: ${{ env.SDK_VERSION }}
+
+    - name: "Set up JDK"
+      uses: actions/setup-java@v4.6.0
+      with:
+        distribution: 'adopt'
+        java-version: '17'
+
+    - name: Download ORT
+      run: |
+        curl -L -o ort.jar https://github.com/oss-review-toolkit/ort/releases/download/1.0.0/ort-1.0.0.jar
+        chmod +x ort.jar
+
+    - name: Run OSS Review Toolkit Analyzer
+      run: |
+        java -jar ort.jar --info analyze \
+          -i . \
+          -o ort-results \
+          --package-managers NuGet
+
+    - name: Generate ORT Report
+      run: |
+        java -jar ort.jar --info report \
+          -i ort-results \
+          -o ort-report
+
+    - name: Upload ORT Report Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: oss-review-report
+        path: ort-report
+
+    # - name: "Restore dependencies"
+    #   run: dotnet restore
+
+    # - name: "Build"
+    #   run: dotnet build --configuration Release --no-restore
+
+    # - name: "Run tests"
+    #   run: dotnet test --configuration Release --no-build --verbosity normal --results-directory ${{ env.TEST_RESULTS_DIRECTORY }} --collect:"XPlat Code Coverage"
