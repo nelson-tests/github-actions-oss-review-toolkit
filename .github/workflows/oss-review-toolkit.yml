@@ -13,6 +13,7 @@ on:
 env:
   SDK_VERSION: '9.0.102'
   TEST_RESULTS_DIRECTORY: './TestResults'
+  POLICY_FILE: .github/oss-review-toolkit-policy.yml
 
 jobs:
   oss-review:
@@ -24,7 +25,6 @@ jobs:
       uses: actions/checkout@v4.2.2
       with:
         fetch-depth: 0
-        persist-credentials: false
 
     - name: "Setup .NET"
       uses: actions/setup-dotnet@v4.2.0
@@ -48,7 +48,7 @@ jobs:
           -i . \
           -o ort-results \
           --package-managers NuGet \
-          --rules-file ${{ github.workspace }}/.github/oss-review-toolkit-policy.yml
+          --rules-file ${{ github.workspace }}/${{ env.POLICY_FILE }}
 
     - name: Generate ORT Report
       run: |
@@ -68,12 +68,3 @@ jobs:
           echo "ORT found license issues!"
           exit 1
         fi
-
-    # - name: "Restore dependencies"
-    #   run: dotnet restore
-
-    # - name: "Build"
-    #   run: dotnet build --configuration Release --no-restore
-
-    # - name: "Run tests"
-    #   run: dotnet test --configuration Release --no-build --verbosity normal --results-directory ${{ env.TEST_RESULTS_DIRECTORY }} --collect:"XPlat Code Coverage"
