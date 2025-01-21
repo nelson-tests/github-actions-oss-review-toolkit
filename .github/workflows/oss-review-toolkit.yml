@@ -37,14 +37,18 @@ jobs:
         distribution: 'adopt'
         java-version: '17'
 
-    - name: Download ORT
+    - name: Download and Extract ORT
       run: |
-        curl -L -o ort.jar https://github.com/oss-review-toolkit/ort/releases/download/1.0.0/ort-1.0.0.jar
-        chmod +x ort.jar
+        curl -L -o ort.tgz https://github.com/oss-review-toolkit/ort/releases/download/46.0.0/ort-46.0.0.tgz
+        mkdir -p ort
+        tar -xzf ort.tgz -C ort
+        chmod +x ort/ort
 
-    - name: Run OSS Review Toolkit Analyzer
+    - name: Run OSS Review Toolkit Analyzer with Policy
+      env:
+        REPO_PATH: ${{ github.workspace }}
       run: |
-        java -jar ort.jar --info analyze \
+        ./ort/ort analyze \
           -i . \
           -o ort-results \
           --package-managers NuGet \
@@ -52,7 +56,7 @@ jobs:
 
     - name: Generate ORT Report
       run: |
-        java -jar ort.jar --info report \
+        ./ort/ort report \
           -i ort-results \
           -o ort-report
 
