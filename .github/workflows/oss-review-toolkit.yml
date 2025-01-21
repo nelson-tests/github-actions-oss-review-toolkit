@@ -47,7 +47,8 @@ jobs:
         java -jar ort.jar --info analyze \
           -i . \
           -o ort-results \
-          --package-managers NuGet
+          --package-managers NuGet \
+          --rules-file ${{ github.workspace }}/.github/oss-review-toolkit-policy.yml
 
     - name: Generate ORT Report
       run: |
@@ -60,6 +61,13 @@ jobs:
       with:
         name: oss-review-report
         path: ort-report
+
+    - name: Fail on ORT issues
+      run: |
+        if grep -q "ERROR" ort-results/*.log; then
+          echo "ORT found license issues!"
+          exit 1
+        fi
 
     # - name: "Restore dependencies"
     #   run: dotnet restore
